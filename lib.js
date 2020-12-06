@@ -41,4 +41,27 @@ const readListsFromFile = (filename) => {
   return lines.map(parseLine);
 }
 
-module.exports = { sum, permutator, readArrayFromFile, readStringArrayFromFile, readListsFromFile }
+const parseRecords = (lines, rowInitialFunc, rowAccumulatorFunc) => {
+  let records = []
+  let currRecord = rowInitialFunc()
+  let currRecordStarted = false
+
+  lines.forEach(line => {
+    if (line.length > 0) {
+      currRecordStarted = true;
+      rowAccumulatorFunc(currRecord, line);
+    } else {
+      records.push(currRecord);
+      currRecord = rowInitialFunc();
+      currRecordStarted = false;
+    }
+  })
+
+  if (currRecordStarted) {
+    records.push(currRecord);
+  }
+
+  return records;
+}
+
+module.exports = { sum, permutator, readArrayFromFile, readStringArrayFromFile, readListsFromFile, parseRecords }
