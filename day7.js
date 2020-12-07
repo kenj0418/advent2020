@@ -30,7 +30,6 @@ const getAllColors = (rules) => {
 }
 
 const canReach = (rules, startingColor, targetColor) => {
-  // console.log(`canReach(..., ${startingColor}, ${targetColor})`);
   if (startingColor == targetColor) {
     return true;
   }
@@ -40,22 +39,17 @@ const canReach = (rules, startingColor, targetColor) => {
     const rule = relevantRules[ruleNum];
     for (let rhsPartNum = 0; rhsPartNum < rule.rhs.length; rhsPartNum++) {
       const rhsPart = rule.rhs[rhsPartNum];
-      // console.log(rhsPart);
       if (rhsPart != null && rhsPart.qty > 0 && canReach(rules, rhsPart.item, targetColor)) {
-        // console.log(`TRUE canReach(..., ${startingColor}, ${targetColor})`);
         return true;
       }
     }
   }
 
-  // console.log(`FALSE canReach(..., ${startingColor}, ${targetColor})`);
   return false;
 }
 
 const getBagContentCount = (rules, outerBag, level = 0) => {
-  // console.log(`${level} getBagContentCount(..., ${outerBag})`);
   const relevantRule = rules.find(rule => {return rule.lhs == outerBag});
-  // console.log(`rule: ${JSON.stringify(relevantRule)}`);
   let contentsCount = 0;
   if (!relevantRule) {
     throw new Error(outerBag);
@@ -75,20 +69,15 @@ const run = () => {
   const st = readStringArrayFromFile("./input/day7.txt", "\n").filter(line => {return line.length});
 
   const rules = st.map(parseRule);
-  // console.log(JSON.stringify(rules, null,2));
 
-  // const bagColors = getAllColors(rules);
-  // console.log(bagColors);
-
-  // const relevantBagColors = bagColors.filter((color) => {
-  //   return canReach(rules, color, "shiny gold");
-  // });
+  const bagColors = getAllColors(rules);
+  const relevantBagColors = bagColors.filter((color) => {
+    return canReach(rules, color, "shiny gold");
+  });
+  console.log(`Day 6 part 1:  ${relevantBagColors.length - 1}`);
   
   const bagContents = getBagContentCount(rules, "shiny gold");
-
-  // console.log(`Day 6 part 1:  ${relevantBagColors.length - 1}`);
   console.log(`Day 6 part 2:  ${bagContents}`);
-  // console.log(`Day 6 part 2:  ${}`);
 }
 
 module.exports = { run };
