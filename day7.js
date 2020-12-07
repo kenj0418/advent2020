@@ -1,16 +1,17 @@
 const {readStringArrayFromFile} = require("./lib");
 
 const parseRhs = (rhs) => {
-  if (rhs == "no other") {
-    return null;
-  }
   const parts = rhs.match(/([0-9]+) (.+)/);
-  if (!parts) throw new Error(rhs);
   return {qty: parseInt(parts[1]), item: parts[2]};
 }
+
 const parseRule = (line) => {
-  const parts = line.replace(/ bags\.?/g,"").replace(/ bag\.?/g, "").split(" contain ");
+  const parts = line.replace(/ bags?\.?/g,"").split(" contain ");
   const lhs = parts[0];
+  if (parts[1] == "no other") {
+    return {lhs, rhs: []};
+  }
+
   const rhsParts = parts[1].split(", ").map(parseRhs);
   return {lhs, rhs: rhsParts}
 }
@@ -20,9 +21,7 @@ const getAllColors = (rules) => {
   rules.forEach((rule) => {
     colors.add(rule.lhs);
     rule.rhs.forEach(rhsPart => {
-      if (rhsPart != null) {
-        colors.add(rhsPart.item);
-      }
+      colors.add(rhsPart.item);
     });
   });
 
@@ -34,14 +33,11 @@ const canReach = (rules, startingColor, targetColor) => {
     return true;
   }
 
-  const relevantRules = rules.filter((rule) => {return rule.lhs == startingColor});
-  for (let ruleNum = 0; ruleNum < relevantRules.length; ruleNum++) {
-    const rule = relevantRules[ruleNum];
-    for (let rhsPartNum = 0; rhsPartNum < rule.rhs.length; rhsPartNum++) {
-      const rhsPart = rule.rhs[rhsPartNum];
-      if (rhsPart != null && rhsPart.qty > 0 && canReach(rules, rhsPart.item, targetColor)) {
-        return true;
-      }
+  const rule = rules.find((rule) => {return rule.lhs == startingColor});
+  for (let rhsPartNum = 0; rhsPartNum < rule.rhs.length; rhsPartNum++) {
+    const rhsPart = rule.rhs[rhsPartNum];
+    if (canReach(rules, rhsPart.item, targetColor)) {
+      return true;
     }
   }
 
