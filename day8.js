@@ -12,7 +12,7 @@ const doInstr = (computer) => {
 
   const currInst = computer.prog[computer.IP].instr;
   const currParam = computer.prog[computer.IP].param;
-  computer.prog[computer.IP] = {instr: "fail", param: 0};
+  computer.prog[computer.IP] = {instr: "fail", param: 0}; // don't run same instruction twice
 
   switch (currInst) {
     case "acc":
@@ -36,10 +36,10 @@ const doInstr = (computer) => {
   }
 }
 
-const swapInstr = (computer, addr, newInst) => {
-  let newProg = JSON.parse(JSON.stringify(computer.prog));
+const swapInstr = (prog, addr, newInst) => {
+  let newProg = JSON.parse(JSON.stringify(prog));
   newProg[addr].instr = newInst;
-  return computer = {
+  return {
     IP: 0,
     prog: newProg,
     ACC: 0,
@@ -47,11 +47,11 @@ const swapInstr = (computer, addr, newInst) => {
   };
 }
 
-const swap = (computer, addr) => {
-  if (computer.prog[addr].instr == "nop") {
-    return swapInstr(computer, addr, "jmp")
-  } else if (computer.prog[addr].instr == "jmp") {
-    return swapInstr(computer, addr, "nop")
+const swap = (prog, addr) => {
+  if (prog[addr].instr == "nop") {
+    return swapInstr(prog, addr, "jmp")
+  } else if (prog[addr].instr == "jmp") {
+    return swapInstr(prog, addr, "nop")
   } else {
     return null;
   }
@@ -63,9 +63,9 @@ const runToStopOrFail = (computer) => {
   }
 }
 
-const runTillSingleSwap = (computer) => {
-  for (let i = 0; i < computer.prog.length - 1; i++) {
-    const testComputer = swap(computer, i);
+const runTillSingleSwap = (prog) => {
+  for (let i = 0; i < prog.length - 1; i++) {
+    const testComputer = swap(prog, i);
     if (testComputer) {
       runToStopOrFail(testComputer);
       if (testComputer.STOP) {
@@ -84,15 +84,15 @@ const run = () => {
 
   const computer = {
     IP: 0,
-    prog,
+    prog: JSON.parse(JSON.stringify(prog)),
     ACC: 0,
     STOP: false,
   };
+  runToStopOrFail(computer);
+  console.log(`Day 8 part 1:  ${computer.ACC}`);
 
-  const successComputer = runTillSingleSwap(computer);
+  const successComputer = runTillSingleSwap(prog);
   console.log(`Day 8 part 2:  ${successComputer.ACC}`);
-
-  // console.log(`Day 8 part 1:  ${computer.ACC}`);
 }
 
 module.exports = { run };
