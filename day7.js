@@ -70,10 +70,10 @@ const run = () => {
   const relevantBagColors = bagColors.filter((color) => {
     return canReach(rules, color, "shiny gold");
   });
-  console.log(`Day 6 part 1:  ${relevantBagColors.length - 1}`);
+  console.log(`Day 7 part 1:  ${relevantBagColors.length - 1}`);
   
   const bagContents = getBagContentCount(rules, "shiny gold");
-  console.log(`Day 6 part 2:  ${bagContents}`);
+  console.log(`Day 7 part 2:  ${bagContents}`);
 }
 
 module.exports = { run };
