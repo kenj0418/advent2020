@@ -42,55 +42,41 @@ const getVisibleCount = (map, x, y) => {
   return n + s + e + w + ne + nw + se + sw;
 }
 
-const applySeatRules = (map) => {
-  const afterMap = [];
-
-  for (let lineNum = 0; lineNum < map.length; lineNum++) {
-    let line = "";
-    for (let charNum = 0; charNum < map[lineNum].length; charNum++) {
-      const adjCount = getAdjacentCount(map, charNum, lineNum);
-      const currValue = getValue(map, charNum, lineNum);
-      if (currValue == "L" && adjCount == 0) {
-        line += "#";
-      } else if (currValue == "#" && adjCount >= 4) {
-        line += "L";
-      } else {
-        line += currValue;
-      }
-    }
-    afterMap.push(line);
+const basicSeatRules = (map, x, y) => {
+  const adjCount = getAdjacentCount(map, x, y);
+  const currValue = getValue(map, x, y);
+  if (currValue == "L" && adjCount == 0) {
+    return "#";
+  } else if (currValue == "#" && adjCount >= 4) {
+    return "L";
+  } else {
+    return currValue;
   }
-
-  // If a seat is empty (L) and there are no occupied seats adjacent to it, the seat becomes occupied.
-  // If a seat is occupied (#) and four or more seats adjacent to it are also occupied, the seat becomes empty.
-  // Otherwise, the seat's state does not change.
-  // Floor (.) never changes; seats don't move, and nobody sits on the floor.
-  return afterMap;
 }
 
-const applySeatRules2 = (map) => {
+const firstVisibleSeatSeatRules = (map, x, y) => {
+  const adjCount = getVisibleCount(map, x, y);
+  const currValue = getValue(map, x, y);
+  if (currValue == "L" && adjCount == 0) {
+    return "#";
+  } else if (currValue == "#" && adjCount >= 5) {
+    return "L";
+  } else {
+    return currValue;
+  }
+}
+
+const applySeatRules = (map, seatRules) => {
   const afterMap = [];
 
   for (let lineNum = 0; lineNum < map.length; lineNum++) {
     let line = "";
     for (let charNum = 0; charNum < map[lineNum].length; charNum++) {
-      const adjCount = getVisibleCount(map, charNum, lineNum);
-      const currValue = getValue(map, charNum, lineNum);
-      if (currValue == "L" && adjCount == 0) {
-        line += "#";
-      } else if (currValue == "#" && adjCount >= 5) {
-        line += "L";
-      } else {
-        line += currValue;
-      }
+      line += seatRules(map, charNum, lineNum);
     }
     afterMap.push(line);
   }
 
-  // If a seat is empty (L) and there are no occupied seats adjacent to it, the seat becomes occupied.
-  // If a seat is occupied (#) and four or more seats adjacent to it are also occupied, the seat becomes empty.
-  // Otherwise, the seat's state does not change.
-  // Floor (.) never changes; seats don't move, and nobody sits on the floor.
   return afterMap;
 }
 
@@ -98,31 +84,16 @@ const different = (map1, map2) => {
   return map1.join("") != map2.join("");
 }
 
-const applyUntilStable = (initialMap) => {
+const applyUntilStable = (initialMap, seatRules) => {
   let prevMap = initialMap;
-  let map = applySeatRules(prevMap);
+  let map = applySeatRules(prevMap, seatRules);
 
   while (different(map, prevMap)) {
     // console.log("");
     // console.log(map);
     // console.log("");
     prevMap = map;
-    map = applySeatRules(prevMap);
-  }
-
-  return map;
-}
-
-const applyUntilStable2 = (initialMap) => {
-  let prevMap = initialMap;
-  let map = applySeatRules(prevMap);
-
-  while (different(map, prevMap)) {
-    // console.log("");
-    // console.log(map);
-    // console.log("");
-    prevMap = map;
-    map = applySeatRules2(prevMap);
+    map = applySeatRules(prevMap, seatRules);
   }
 
   return map;
@@ -134,15 +105,12 @@ const getSeatedCount = (map) => {
 
 const run = () => {
   let st = readStringArrayFromFile("./input/day11.txt", "\n");
-  const finalMap = applyUntilStable(st);
-  const seatedCount = getSeatedCount(finalMap);
   
-    console.log(`Day 11 part 1:  ${seatedCount}`);
+  const finalMap = applyUntilStable(st, basicSeatRules);
+  console.log(`Day 11 part 1:  ${getSeatedCount(finalMap)}`);
 
-    const finalMap2 = applyUntilStable2(st);
-    // console.log(finalMap2);
-    const seatedCount2 = getSeatedCount(finalMap2);
-    console.log(`Day 11 part 2:  ${seatedCount2}`);
+  const finalMap2 = applyUntilStable(st, firstVisibleSeatSeatRules);
+  console.log(`Day 11 part 2:  ${getSeatedCount(finalMap2)}`);
 }
 
 module.exports = { run };
