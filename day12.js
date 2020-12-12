@@ -38,7 +38,6 @@ const forward = (ship, qty) => {
   ship.y += ship.way.y * qty;
 }
 
-
 const moveForEach = (ship, instr) => {
   const action = instr.slice(0,1);
   const qty = parseInt(instr.slice(1));
@@ -53,7 +52,7 @@ const moveForEach = (ship, instr) => {
     case "R": rotWay(ship, -qty); break;
     default: throw new Error(action);
   }
-  console.log(instr, ship);
+  // console.log(instr, ship);
 }
 
 const moveForInstructions = (ship, instructions) => {
@@ -73,11 +72,7 @@ const run = () => {
   }
 
   moveForInstructions(ship, st);
-
   console.log(`${taxiDist(ship)}`);
-  // not 79740
-  // not 79658
-  // not 58751
 }
 
 module.exports = { run };
