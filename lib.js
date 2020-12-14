@@ -24,6 +24,14 @@ const permutator = (inputArr) => {
  return result;
 }
 
+const powerSet = 
+      theArray => theArray.reduce(
+        (subsets, value) => subsets.concat(
+         subsets.map(set => [value,...set])
+        ),
+        [[]]
+      );
+
 const readStringArrayFromFile = (filename, delim) => {
   return fs.readFileSync(filename).toString().split(delim);
 }
@@ -64,4 +72,4 @@ const parseRecords = (lines, rowInitialFunc, rowAccumulatorFunc) => {
   return records;
 }
 
-module.exports = { sum, permutator, readArrayFromFile, readStringArrayFromFile, readListsFromFile, parseRecords }
+module.exports = { sum, permutator, powerSet, readArrayFromFile, readStringArrayFromFile, readListsFromFile, parseRecords }
