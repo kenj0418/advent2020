@@ -98,13 +98,12 @@ const bigIntSum = (bArr) => {
 const run = () => {
   let st = readStringArrayFromFile("./input/day14.txt", "\n");
 
-  // let mem1 = []
-  // processCommands1(mem1, st);
-  // console.log(bigIntSum(mem1));
+  let mem1 = {}
+  processCommands1(mem1, st);
+  console.log(bigIntSum(mem1));
 
   let mem2 = {}
   processCommands2(mem2, st);
-  console.log(`len: ${mem2.length}`);
   console.log(bigIntSum(mem2));
 }
 
