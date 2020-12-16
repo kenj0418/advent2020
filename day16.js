@@ -122,22 +122,35 @@ const getTicketAnswer = (validOrder, yourTicket) => {
   return product;
 }
 
-const findValidPermutation = (checks, nearbyTickets) => {
-  let checkCount = 0;
-  
+const isValidForCheck2 = (check, fieldNum, nearbyTickets) => {
+  if (!check) return false;
+
+  for (let i = 0; i < nearbyTickets.length; i++) {
+    const ticket = nearbyTickets[i];
+    if (!isValidForCheck(check, ticket[fieldNum])) {
+      console.log(`${check.name} not valid at ${fieldNum} with ${ticket[fieldNum]} on ticket ${i} ranges: ${JSON.stringify(check.ranges)}`);
+      console.log(`failed ticket: ${ticket}`);
+      return false;
+    }
+  }
+
+  console.log(`${check.name} IS valid at ${fieldNum}`);
+  return true;
+}
+
+const findValidPermutation = (checks, tickets) => {
   const permute = (arr, m = []) => {
-    if (arr.length === 0) {
-      if (isValidPermutation(m, nearbyTickets)) {
-        return m;
-      }
-      checkCount++
-      if (checkCount % 1048576 == 0) {
-        console.log("checking # ", checkCount);
-      }
+    if (m.length && !isValidForCheck2(m[m.length - 1], m.length - 1, tickets)) {
+      // console.log(`${m[m.length - 1].name} not valid in position ${m.length - 1}`);
+      // not valid
+    } else  if (arr.length === 0) {
+      console.log("FOUND IT");
+      return m;
     } else {
       for (let i = 0; i < arr.length; i++) {
         let curr = arr.slice();
         let next = curr.splice(i, 1);
+
         permute(curr.slice(), m.concat(next))
       }
     }
@@ -156,11 +169,17 @@ const run = () => {
   const answer = getErrorScanningRate(checks, nearbyTickets);
   console.log(answer);
 
+  console.log("TOTAL TICKETS: ", nearbyTickets.length);
   const validTickets = getValidTickets(checks, nearbyTickets);
+  console.log("VALID TICKETS: ", validTickets.length);
   const validOrder = findValidPermutation(checks, validTickets);
-  const answer2 = getTicketAnswer(validOrder, yourTicket);
-
-  console.log(answer2);
+  console.log(validOrder);
+  if (validOrder) {
+    const answer2 = getTicketAnswer(validOrder, yourTicket);
+    console.log(answer2);
+  } else {
+    console.log("FAILURE");
+  }
 }
 
 module.exports = { run };
