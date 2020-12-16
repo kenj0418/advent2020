@@ -167,6 +167,28 @@ const getValidAtPositionArrays = (checks, tickets) => {
   return valid;
 }
 
+const getValidAssignment = (validAtPosition, soFar = [], soFarNames = []) => {
+  const pos = soFar.length;
+  const options = validAtPosition[pos];
+  for (let optionNum = 0; optionNum < options.length; optionNum++) {
+    const option = options[optionNum];
+    if (pos <= 1) {console.log(`@${pos} #${optionNum}: ${option.name}, soFar: ${soFarNames}`);}
+    if (soFarNames.indexOf(option.name) < 0) {
+      if (soFarNames.length + 1 == validAtPosition.length) {
+        return [...soFar, option];
+      }
+
+      const validAssignment = getValidAssignment(validAtPosition, [...soFar, option], [...soFarNames, option.name]);
+      if (validAssignment) {
+        console.log(`Valid with len=${soFar.length}: ${soFarNames}`);
+        return validAssignment;
+      }
+    }
+  }
+
+  return null;
+}
+
 
 const run = () => {
   let st = readStringArrayFromFile("./input/day16.txt", "\n\n");
@@ -183,14 +205,14 @@ const run = () => {
   console.log("VALID TICKETS: ", validTickets.length);
 
   const validAtPosition = getValidAtPositionArrays(checks, validTickets);
-  console.log(validAtPosition);
-  return;
+  console.log("valid for each position: ", validAtPosition.map((v) => {return v.length}));
 
-  const validOrder = findValidPermutation(checks, validTickets);
-  console.log(validOrder);
-  if (validOrder) {
-    const answer2 = getTicketAnswer(validOrder, yourTicket);
-    console.log(answer2);
+  const validAssignment = getValidAssignment(validAtPosition);
+  console.log(validAssignment);
+
+  if (validAssignment) {
+    const answer2 = getTicketAnswer(validAssignment, yourTicket);
+    console.log("ANSWER (Part 2):", answer2);
   } else {
     console.log("FAILURE");
   }
