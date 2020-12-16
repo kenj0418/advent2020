@@ -1,4 +1,4 @@
-const {readStringArrayFromFile, permutator} = require("./lib");
+const {readStringArrayFromFile} = require("./lib");
 
 const parseCheck = (checkSt) => {
   const parts = checkSt.split(": ");
@@ -98,32 +98,10 @@ const isValidForTicket = (perm, ticket) => {
   return true;
 }
 
-const isValidPermutation = (perm, nearbyTickets) => {
-  for (let i = 0; i < nearbyTickets.length; i++) {
-    if (!isValidForTicket(perm, nearbyTickets[i])) {
-      return false;
-    }
-  }
-  
-  return true;
-}
-
-const findValidOrder = (checkPermutations, nearbyTickets) => {
-  for (let i = 0; i < checkPermutations.length; i++) {
-    const perm = checkPermutations[i];
-    if (isValidPermutation(perm, nearbyTickets)) {
-      return perm;
-    }
-  }
-
-  throw new Error("NONE VALID");
-}
-
 const getTicketAnswer = (validOrder, yourTicket) => {
   let product = 1;
   for (let i = 0; i < validOrder.length; i++) {
     const check = validOrder[i];
-    console.log(check);
     if (check.name.startsWith("departure")) {
       product *= yourTicket[i];
     }
@@ -146,7 +124,6 @@ const isValidForCheck2 = (check, fieldNum, nearbyTickets) => {
     }
   }
 
-  // console.log(`${check.name} IS valid at ${fieldNum}`);
   return true;
 }
 
@@ -180,7 +157,6 @@ const getValidAssignment = (validAtPosition, soFar = [], soFarNames = []) => {
 
       const validAssignment = getValidAssignment(validAtPosition, [...soFar, option], [...soFarNames, option.name]);
       if (validAssignment) {
-        console.log(`Valid with len=${soFar.length}: ${soFarNames}`);
         return validAssignment;
       }
     }
@@ -193,19 +169,16 @@ const getValidAssignment = (validAtPosition, soFar = [], soFarNames = []) => {
 const run = () => {
   let st = readStringArrayFromFile("./input/day16.txt", "\n\n");
   let {checks, yourTicket, nearbyTickets} = parseData(st);
-  // console.log(JSON.stringify(checks));
-  // console.log(yourTicket);
-  // console.log(nearbyTickets);
 
   const answer = getErrorScanningRate(checks, nearbyTickets);
-  console.log(answer);
+  console.log("ANSWER (Part 1):", answer);
 
-  console.log("TOTAL TICKETS: ", nearbyTickets.length);
+  // console.log("TOTAL TICKETS: ", nearbyTickets.length);
   const validTickets = getValidTickets(checks, nearbyTickets);
-  console.log("VALID TICKETS: ", validTickets.length);
+  // console.log("VALID TICKETS: ", validTickets.length);
 
   const validAtPosition = getValidAtPositionArrays(checks, validTickets);
-  console.log("valid for each position: ", validAtPosition.map((v) => {return v.length}));
+  // console.log("valid for each position: ", validAtPosition.map((v) => {return v.length}));
 
   const validAssignment = getValidAssignment(validAtPosition);
   console.log(validAssignment);
@@ -219,18 +192,3 @@ const run = () => {
 }
 
 module.exports = { run };
-
-/*
-class: 1-3 or 5-7
-row: 6-11 or 33-44
-seat: 13-40 or 45-50
-
-your ticket:
-7,1,14
-
-nearby tickets:
-7,3,47
-40,4,50
-55,2,20
-38,6,12
-*/
