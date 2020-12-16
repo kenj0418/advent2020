@@ -64,6 +64,16 @@ const getError = (checks, ticket) => {
   return 0;
 }
 
+const ticketIsValid = (checks, ticket) => {
+  for (let i = 0; i < ticket.length; i++) {
+    if (!isValidValue(checks, ticket[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 const getErrorScanningRate = (checks, tickets) => {
   let errors = 0;
   tickets.forEach(ticket => {
@@ -74,7 +84,7 @@ const getErrorScanningRate = (checks, tickets) => {
 
 const getValidTickets = (checks, tickets) => {
   return tickets.filter(ticket => {
-    return getError(checks, ticket) == 0
+    return ticketIsValid(checks, ticket)
   })
 }
 
@@ -128,36 +138,35 @@ const isValidForCheck2 = (check, fieldNum, nearbyTickets) => {
   for (let i = 0; i < nearbyTickets.length; i++) {
     const ticket = nearbyTickets[i];
     if (!isValidForCheck(check, ticket[fieldNum])) {
-      console.log(`${check.name} not valid at ${fieldNum} with ${ticket[fieldNum]} on ticket ${i} ranges: ${JSON.stringify(check.ranges)}`);
-      console.log(`failed ticket: ${ticket}`);
+      if (fieldNum == 1 && check.name=='duration') {
+        console.log(`${check.name} not valid at ${fieldNum} with ${ticket[fieldNum]} on ticket ${i} ranges: ${JSON.stringify(check.ranges)}`);
+        console.log(`failed ticket: ${ticket}`);
+      }
       return false;
     }
   }
 
-  console.log(`${check.name} IS valid at ${fieldNum}`);
+  // console.log(`${check.name} IS valid at ${fieldNum}`);
   return true;
 }
 
-const findValidPermutation = (checks, tickets) => {
-  const permute = (arr, m = []) => {
-    if (m.length && !isValidForCheck2(m[m.length - 1], m.length - 1, tickets)) {
-      // console.log(`${m[m.length - 1].name} not valid in position ${m.length - 1}`);
-      // not valid
-    } else  if (arr.length === 0) {
-      console.log("FOUND IT");
-      return m;
-    } else {
-      for (let i = 0; i < arr.length; i++) {
-        let curr = arr.slice();
-        let next = curr.splice(i, 1);
+const getValidAtPositionArrays = (checks, tickets) => {
+  let valid = new Array(checks.length);
 
-        permute(curr.slice(), m.concat(next))
+  for (let pos = 0; pos < checks.length; pos++) {
+    let validForPos = [];
+    for (let checkNum = 0; checkNum < checks.length; checkNum++) {
+
+      if (isValidForCheck2(checks[checkNum], pos, tickets)) {
+        validForPos.push(checks[checkNum]);
       }
     }
+    valid[pos] = validForPos;
   }
 
-  return permute(checks);
+  return valid;
 }
+
 
 const run = () => {
   let st = readStringArrayFromFile("./input/day16.txt", "\n\n");
@@ -172,6 +181,11 @@ const run = () => {
   console.log("TOTAL TICKETS: ", nearbyTickets.length);
   const validTickets = getValidTickets(checks, nearbyTickets);
   console.log("VALID TICKETS: ", validTickets.length);
+
+  const validAtPosition = getValidAtPositionArrays(checks, validTickets);
+  console.log(validAtPosition);
+  return;
+
   const validOrder = findValidPermutation(checks, validTickets);
   console.log(validOrder);
   if (validOrder) {
