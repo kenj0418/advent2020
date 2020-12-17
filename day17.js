@@ -4,17 +4,21 @@ const {readStringArrayFromFile} = require("./lib");
 
 
 const getNeighbors = (loc) => {
+  let neighbors = []
+  for (let x = loc.x-1; x <= loc.x+1; x ++) {
+    for (let y = loc.y-1; y <= loc.y+1; y ++) {
+      for (let z = loc.z-1; z <= loc.z+1; z ++) {
+        if (x != loc.x || y != loc.y || z != loc.z) {
+          neighbors.push({x,y,z});
+        }
+      }
+    }
+  }
+
+  return neighbors;
   // Each cube only ever considers its neighbors:
   // any of the 26 other cubes where any of their coordinates differ by at most 1.
   // For example, given the cube at x=1,y=2,z=3, its neighbors include the cube at x=2,y=2,z=2, the cube at x=0,y=2,z=3, and so on.
-    return [
-    {x: loc.x - 1, y: loc.y, z:loc.z},
-    {x: loc.x + 1, y: loc.y, z:loc.z},
-    {x: loc.x, y: loc.y - 1, z:loc.z},
-    {x: loc.x, y: loc.y + 1, z:loc.z},
-    {x: loc.x, y: loc.y, z:loc.z - 1},
-    {x: loc.x, y: loc.y, z:loc.z + 1}
-  ]
 }
 
 const getKey = (loc) => {
@@ -27,28 +31,29 @@ const isActive = (cubes, loc) => {
 
 const getNextState = (cubes, loc) => {
   const neighbors = getNeighbors(loc);
-  // console.log(neighbors);
   let neighborCount = 0
   neighbors.forEach(nLoc => {
-    // console.log(JSON.stringify(nLoc));
     if (isActive(cubes, nLoc)) {
       neighborCount++
     }
   });
 
   if (isActive(cubes, loc)) {
-    console.log(`Active with ${neighborCount} nearby`);
-    return neighborCount == 2 || neighborCount == 3
+    const ret = neighborCount == 2 || neighborCount == 3;
+    console.log(`Active with ${neighborCount} nearby: ${ret}`);
+    return ret;
   } else {
-    console.log(`Inactive with ${neighborCount} nearby`);
-    return neighborCount == 3
+    const ret = neighborCount == 3;
+    console.log(`Inactive with ${neighborCount} nearby: ${ret}`);
+    return ret;
   }
   // If a cube is active and exactly 2 or 3 of its neighbors are also active, the cube remains active. Otherwise, the cube becomes inactive.
   // If a cube is inactive but exactly 3 of its neighbors are active, the cube becomes active. Otherwise, the cube remains inactive.
 }
 
 const activate = (cubes, loc) => {
-  console.log(`Activating ${loc.x},${loc.y},${loc.z}`);
+  cubes.count++;
+  // console.log(`Activating ${loc.x},${loc.y},${loc.z}`);
   cubes.active[getKey(loc)] = true;
   if (loc.x < cubes.min.x) {
     cubes.min.x = loc.x
@@ -71,11 +76,10 @@ const activate = (cubes, loc) => {
 }
 
 const initCube = () => {
-  return {min: {x: 0, y:0, z: 0}, max: {x: 0, y:0, z: 0}, active:{}};
+  return {count:0,min: {x: 0, y:0, z: 0}, max: {x: 0, y:0, z: 0}, active:{}};
 }
 
 const processNextState = (oldCubes) => {
-  console.log(oldCubes);
   const minX = oldCubes.min.x;
   const minY = oldCubes.min.y;
   const minZ = oldCubes.min.z;
@@ -89,7 +93,6 @@ const processNextState = (oldCubes) => {
     for (let y = minY - 1; y <= maxY + 1; y++) {
       for (let z = minZ - 1; z <= maxZ + 1; z++) {
         const loc = {x,y,z};
-        const newCubes = initCube();
         if (getNextState(oldCubes, loc)) {
           activate(newCubes, loc);
         }
@@ -118,19 +121,17 @@ const parseCubes = (st) => {
 }
 
 const run = () => {
-  let st = readStringArrayFromFile("./input/day17.txt", "\n\n");
+  let st = readStringArrayFromFile("./input/day17.txt", "\n");
 
   let cubes = parseCubes(st);
-  console.log(oldCubes);
-  // cubes = processNextState(cubes);
-  // cubes = processNextState(cubes);
-  // cubes = processNextState(cubes);
-  // cubes = processNextState(cubes);
-  // cubes = processNextState(cubes);
-  // cubes = processNextState(cubes);
+  cubes = processNextState(cubes);
+  cubes = processNextState(cubes);
+  cubes = processNextState(cubes);
+  cubes = processNextState(cubes);
+  cubes = processNextState(cubes);
+  cubes = processNextState(cubes);
 
-  const answer = Object.getOwnPropertyNames(cubes.active).length;
-  console.log("ANSWER (Part 1):", answer);
+  console.log("ANSWER (Part 1):", cubes.count);
 }
 
 module.exports = { run };
