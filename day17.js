@@ -1,15 +1,14 @@
 const {readStringArrayFromFile} = require("./lib");
 
-
-
-
 const getNeighbors = (loc) => {
   let neighbors = []
-  for (let x = loc.x-1; x <= loc.x+1; x ++) {
-    for (let y = loc.y-1; y <= loc.y+1; y ++) {
-      for (let z = loc.z-1; z <= loc.z+1; z ++) {
-        if (x != loc.x || y != loc.y || z != loc.z) {
-          neighbors.push({x,y,z});
+  for (let x = loc.x-1; x <= loc.x+1; x++) {
+    for (let y = loc.y-1; y <= loc.y+1; y++) {
+      for (let z = loc.z-1; z <= loc.z+1; z++) {
+        for (let w = loc.w-1; w <= loc.w+1; w++) {
+          if (x != loc.x || y != loc.y || z != loc.z || w != loc.w) {
+            neighbors.push({x,y,z,w});
+          }
         }
       }
     }
@@ -22,7 +21,7 @@ const getNeighbors = (loc) => {
 }
 
 const getKey = (loc) => {
-  return `${loc.x},${loc.y},${loc.z}`
+  return `${loc.x},${loc.y},${loc.z},${loc.w}`
 }
 
 const isActive = (cubes, loc) => {
@@ -73,28 +72,38 @@ const activate = (cubes, loc) => {
   if (loc.z > cubes.max.z) {
     cubes.max.z = loc.z
   }
+  if (loc.w < cubes.min.w) {
+    cubes.min.w = loc.w
+  }
+  if (loc.w > cubes.max.w) {
+    cubes.max.w = loc.w
+  }
 }
 
 const initCube = () => {
-  return {count:0,min: {x: 0, y:0, z: 0}, max: {x: 0, y:0, z: 0}, active:{}};
+  return {count:0,min: {x: 0, y:0, z: 0,w:0}, max: {x: 0, y:0, z: 0,w:0}, active:{}};
 }
 
 const processNextState = (oldCubes) => {
   const minX = oldCubes.min.x;
   const minY = oldCubes.min.y;
   const minZ = oldCubes.min.z;
+  const minW = oldCubes.min.w;
   const maxX = oldCubes.max.x;
   const maxY = oldCubes.max.y;
   const maxZ = oldCubes.max.z;
+  const maxW = oldCubes.max.w;
 
   const newCubes = initCube()
 
   for (let x = minX - 1; x <= maxX + 1; x++) {
     for (let y = minY - 1; y <= maxY + 1; y++) {
       for (let z = minZ - 1; z <= maxZ + 1; z++) {
-        const loc = {x,y,z};
-        if (getNextState(oldCubes, loc)) {
-          activate(newCubes, loc);
+        for (let w = minW - 1; w <= maxW + 1; w++) {
+          const loc = {x,y,z,w};
+          if (getNextState(oldCubes, loc)) {
+            activate(newCubes, loc);
+          }
         }
       }
     }
@@ -110,7 +119,7 @@ const parseCubes = (st) => {
     const line = st[y];
     for (let x = 0; x < line.length; x++) {
       if (line.charAt(x) == "#") {
-        activate(cubes, {x,y,z:0});
+        activate(cubes, {x,y,z:0,w:0});
       }
     }
   }
