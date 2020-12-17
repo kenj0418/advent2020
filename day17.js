@@ -40,11 +40,11 @@ const getNextState = (cubes, loc) => {
 
   if (isActive(cubes, loc)) {
     const ret = neighborCount == 2 || neighborCount == 3;
-    console.log(`Active with ${neighborCount} nearby: ${ret}`);
+    // console.log(`Active with ${neighborCount} nearby: ${ret}`);
     return ret;
   } else {
     const ret = neighborCount == 3;
-    console.log(`Inactive with ${neighborCount} nearby: ${ret}`);
+    // console.log(`Inactive with ${neighborCount} nearby: ${ret}`);
     return ret;
   }
   // If a cube is active and exactly 2 or 3 of its neighbors are also active, the cube remains active. Otherwise, the cube becomes inactive.
@@ -67,10 +67,10 @@ const activate = (cubes, loc) => {
   if (loc.y > cubes.max.y) {
     cubes.max.y = loc.y
   }
-  if (loc.z < cubes.min.x) {
+  if (loc.z < cubes.min.z) {
     cubes.min.z = loc.z
   }
-  if (loc.z > cubes.max.x) {
+  if (loc.z > cubes.max.z) {
     cubes.max.z = loc.z
   }
 }
@@ -100,6 +100,7 @@ const processNextState = (oldCubes) => {
     }
   }
 
+  // dumpCube(newCubes);
   return newCubes;
 }
 
@@ -119,11 +120,31 @@ const parseCubes = (st) => {
 
   return cubes;
 }
+const dumpCube = (cubes) => {
+  console.log("--------------");
+  console.log(`min:${JSON.stringify(cubes.min)}, max:${JSON.stringify(cubes.max)}`);
+  for (let z = cubes.min.z; z <= cubes.max.z; z++) {
+    console.log(`z=${z}`);
+    for (let y = cubes.min.y; y <= cubes.max.y; y++) {
+      let st = "";
+      for (let x = cubes.min.x; x <= cubes.max.x; x++) {
+        if (isActive(cubes, {x,y,z})) {
+          st += "#"
+        } else {
+          st += "."
+        }
+      }
+      console.log(st);
+    }
+    console.log("");
+  }
+}
 
 const run = () => {
   let st = readStringArrayFromFile("./input/day17.txt", "\n");
 
   let cubes = parseCubes(st);
+  // dumpCube(cubes);
   cubes = processNextState(cubes);
   cubes = processNextState(cubes);
   cubes = processNextState(cubes);
