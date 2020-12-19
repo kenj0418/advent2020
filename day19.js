@@ -97,23 +97,24 @@ const run = () => {
   let rules = parseRules(ruleSt)
   let msgSt = st[1].split("\n");
 
-  const matchingMsgs = msgSt.filter((msg) => {
-    const result = isMatch(rules, 0, msg);
-    console.log(`${result} ${msg}`);
-    return result;
-  })
-  console.log("ANSWER (Part 1):", matchingMsgs.length);
-
-  cache = {};
-  
-  // 8: 42 | 42 8
-  // 11: 42 31 | 42 11 31
   // const matchingMsgs = msgSt.filter((msg) => {
   //   const result = isMatch(rules, 0, msg);
   //   console.log(`${result} ${msg}`);
   //   return result;
   // })
-  // console.log("ANSWER (Part 1):", matchingMsgs2.length);
+  // console.log("ANSWER (Part 1):", matchingMsgs.length);
+
+  cache = {};
+
+  rules[8] = parseRule("8: 42 | 42 8");
+  rules[11] = parseRule("11: 42 31 | 42 11 31");
+    
+  const matchingMsgs2 = msgSt.filter((msg) => {
+    const result = isMatch(rules, 0, msg);
+    console.log(`${result} ${msg}`);
+    return result;
+  })
+  console.log("ANSWER (Part 1):", matchingMsgs2.length);
 }
 
 module.exports = { run };
