@@ -3,6 +3,10 @@ const {readStringArrayFromFile} = require("./lib");
 const rotate = (grid) => {
   let newGrid = [];
 
+  if (!grid || !grid[0]) {
+    // console.log(`grid: ${JSON.stringify(grid)}`);
+  }
+
   for (let colNum = grid[0].length - 1; colNum >= 0; colNum--) {
     let newLine = "";
     for (let rowNum = 0; rowNum < grid.length; rowNum++) {
@@ -16,7 +20,7 @@ const rotate = (grid) => {
 
 const parseTile = (st) => {
   const lines = st.split("\n");
-  const id = lines[0];
+  const id = parseInt(lines[0].match(/Tile ([0-9]*)\:/)[1]);
   const zero = lines.slice(1);
   const one = rotate(zero);
   const two = rotate(one);
@@ -46,7 +50,7 @@ const getTop = (grid) => {
 
 const fitsWith = (arrangement, x, y, grid, dir) => {
   // console.log(`checking ${x}, ${y}`);
-  if (x < 0 || y < 0 || y >= arrangement.length) return true;
+  if (x < 0 || y < 0 || y >= arrangement.length || x >= arrangement.length) return true;
 
   const target = arrangement[y][x];
   if (!target) return true;
@@ -72,85 +76,70 @@ const fitsWith = (arrangement, x, y, grid, dir) => {
       break;
   }
 
-  // console.log (`Comparing DIR ${dir}, gridSt:${gridSt}, targetSt:${targetSt}`);
+  // if (gridSt != targetSt) {
+  //   console.log(`Comparing DIR ${dir}, gridSt:${gridSt}, targetSt:${targetSt} NOT EQUAL`);
+  // }
   return gridSt == targetSt;
 }
 
-const canFit = (arrangement, grid, y) => {
-  // console.log(`canFit @ ${y}`);
-  if (y >= arrangement.length) {
-    const result = fitsWith(arrangement, 0, y - 1, grid);
-    // console.log(`RESULT1: ${result}`);
-    return result;
-  }
-
-  // if (!arrangement[y]) {
-  //   console.log("y", y);
-  //   console.log(arrangement);
-  // }
-  const x = arrangement[y].length;
-
+const canFit = (arrangement, grid, x, y) => {
   const result = fitsWith(arrangement, x - 1, y, grid, "L") &&
     fitsWith(arrangement, x + 1, y, grid, "R") &&
     fitsWith(arrangement, x, y - 1, grid, "U") &&
     fitsWith(arrangement, x, y + 1, grid, "D");
-  // console.log(`RESULT2: ${result}`);
   return result;
 }
 
 const copyArrangement = (arr) => {
-  let newArr = []
-  arr.forEach(row => {
-    newArr.push([...row]);
-  })
+  let newArr = new Array(arr.length);
+  for (let y = 0; y < arr.length; y++) {
+    newArr[y] = new Array(arr.length);
+    for (let x = 0; x < arr.length; x++) {
+      newArr[y][x] = arr[y][x];
+    }
+  }
   return newArr;
 }
 
-const placeAt = (arrangement, tile, y) => {
-  // console.log(`placeAt @ ${y}`);
-  // console.log(`tile: ${tile.id}`);
-  for (let i = 0; i < tile.grids.length; i++) {
-    if (canFit(arrangement, tile.grids[i], y)) {
-      const newTile = {
-        id: tile.id,
-        grids: [tile.grids[i]]
-      }
-
-      // console.log(`newTile: ${JSON.stringify(newTile)}`);
-
-      let newArrangement = copyArrangement(arrangement);
-      // console.log(`New Arrangement1: ${JSON.stringify(newArrangement)}`);
-      if (y >= newArrangement.length) {
-        newArrangement.push([newTile]);
-      } else {
-        newArrangement[y].push(newTile);
-      }
-      // console.log(`New Arrangement2: ${JSON.stringify(newArrangement)}`);
-      return newArrangement;
+const placeAt = (arrangement, tile, x, y, rotationNum) => {
+  // console.log(`trying ${tile.id} at ${x},${y}, rotationNum=${rotationNum}`)
+  if (canFit(arrangement, tile.grids[rotationNum], x, y)) {
+    const newTile = {
+      id: tile.id,
+      grids: [tile.grids[rotationNum]]
     }
+
+    let newArrangement = copyArrangement(arrangement);
+    newArrangement[y][x] = newTile;
+    // console.log(`trying ${tile.id} at ${x},${y} FIT}`)
+    return newArrangement;
   }
 
+  // console.log(`trying ${tile.id} at ${x},${y} DID NOT FIT`)
   return null;
 }
 
 const findArrangement = (tiles, arrangement) => {
-  // console.log(`findArrangemnet(#${tiles.length}, #${arrangement.length})`);
+  console.log(`findArrangemnet(#${tiles.length}, #${arrangement.length})`);
   if (tiles.length == 0) {
     return arrangement;
   }
-  for (let tileNum = 0; tileNum < tiles.length; tileNum++) {
-    // console.log(`tileNum: ${tileNum}`);
-    for (let y = 0; y <= arrangement.length; y++) {
-      // console.log(`y: ${y}`);
-      const newArrangement = placeAt(arrangement, tiles[tileNum], y);
-      if (newArrangement) {
-        const newTiles = [...tiles.slice(0, tileNum), ...tiles.slice(tileNum + 1)];
-        const finalArrangement = findArrangement(newTiles, newArrangement);
-        if (finalArrangement) {
-          return finalArrangement
+
+  const nextTile = tiles[0];
+  const remainingTiles = tiles.slice(1);
+
+  for (let x = 0; x < arrangement.length; x++) {
+    for (let y = 0; y < arrangement.length; y++) {
+      if (!arrangement[y][x]) {
+        for (let rotationNum = 0; rotationNum < nextTile.grids.length; rotationNum++) {
+          const newArrangement = placeAt(arrangement, nextTile, x, y, rotationNum);
+          if (newArrangement) {
+            const finalArrangement = findArrangement(remainingTiles, newArrangement);
+            if (finalArrangement) {
+              return finalArrangement
+            }
+          }
         }
-      } else {
-        console.log(`Tile # ${tileNum} does not fit at ${y} tiles left: ${tiles.length}`);
       }
     }
   }
@@ -159,21 +148,62 @@ const findArrangement = (tiles, arrangement) => {
 }
 
 const getScore = (arranged) => {
-  const height = arranged.length;
-  const width = arranged[0].length;
+  const last  = arranged.length - 1;
+  return arranged[0][0].id * arranged[0][last].id * arranged[last][0].id * arranged[last][last].id;
+}
 
-  return arranged[0][0].id * arranged[0][width] * arranged[height][0] * arranged[height][width];
+const initArray = (size) => {
+  let arr = new Array(size);
+  for (let i = 0; i < size; i++) {
+    arr[i] = new Array(size);
+  }
+  return arr;
+}
+
+const debugging = (tiles) => {
+  const t2311 = tiles[0];
+  const t1951 = tiles[1];
+  const t1171 = tiles[2];
+  const t1427 = tiles[3];
+  const t1489 = tiles[4];
+  const t2473 = tiles[5];
+  const t2971 = tiles[6];
+  const t2729 = tiles[7];
+  const t3079 = tiles[8];
+
+
+  return [t1951, t2729, t2311,  t1427];
+  // 1951    2311    3079
+  // 2729    1427    2473
+  // 2971    1489    1171
+
+
+}
+
+const dumpLayout = (arrangement) => {
+  console.log("************")
+  arrangement.forEach(line => {
+    let st = ""
+    line.forEach(tile => {
+      st += `${tile ? tile.id : "XXXX"}\t`;
+    })
+    console.log(st);
+  })
+  console.log("************")
 }
 
 const run = () => {
   let st = readStringArrayFromFile("./input/day20.txt", "\n\n");
   const tiles = st.map(parseTile);
-  const arranged = findArrangement(tiles, []);
+  const size = Math.ceil(Math.sqrt(tiles.length));
+  console.log(`size: ${size}, num tiles: ${tiles.length}`);
+  
+  const arranged = findArrangement(tiles, initArray(size));
   if (!arranged) {
     throw new Error("FAILED");
   }
 
-  console.log(arranged);
+  dumpLayout(arranged);
   const score = getScore(arranged);
 
   console.log("ANSWER (Part 1):", score);
