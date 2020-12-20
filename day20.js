@@ -56,7 +56,6 @@ const parseTile = (st) => {
 }
 
 const getLeft = (grid) => {
-  console.log(grid);
   return grid.map(st => {return st[0];}).join("");
 }
 
@@ -72,70 +71,36 @@ const getTop = (grid) => {
   return grid[0];
 }
 
+const addLookup = (arr, key, value) => {
+  if (arr[key]) {
+    arr[key].push(value);
+  } else {
+    arr[key] = [value];
+  }
+}
+
 const processTileLookup = (tiles) => {
   let lefts = {};
   let rights = {};
   let tops = {};
   let bottoms = {}
   tiles.forEach(tile => {
-    console.log("TILE", tile);
     tile.grids.forEach((grid) => {
       const currTile = {
         id: tile.id,
         grids: [grid]
       };
-      lefts[getLeft(grid)] = currTile;
-      rights[getRight(grid)] = currTile;
-      tops[getTop(grid)] = currTile;
-      bottoms[getBottom(grid)] = currTile;
+
+      addLookup(lefts, grid.left, currTile);
+      addLookup(rights, grid.right, currTile);
+      addLookup(tops, grid.top, currTile);
+      addLookup(bottoms, grid.bottom, currTile);
     })
   })
 
   return {
     lefts, rights, tops, bottoms
   }
-}
-
-const fitsWith = (arrangement, x, y, grid, dir) => {
-  // console.log(`checking ${x}, ${y}`);
-  if (x < 0 || y < 0 || y >= arrangement.length || x >= arrangement.length) return true;
-
-  const target = arrangement[y][x];
-  if (!target) return true;
-  const targetGrid = target.grids[0];
-
-  // console.log(`Comparing ${target} to ${grid}  dir: ${dir}`);
-  switch (dir) {
-    case "L":
-      gridSt = getLeft(grid);
-      targetSt =  getRight(targetGrid);
-      break;
-    case "R":
-      gridSt = getRight(grid);
-      targetSt =  getRight(targetGrid);
-      break;
-    case "U":
-      gridSt = getTop(grid);
-      targetSt =  getBottom(targetGrid);
-      break;
-    case "D": 
-      gridSt = getBottom(grid);
-      targetSt =  getTop(targetGrid);
-      break;
-  }
-
-  // if (gridSt != targetSt) {
-  //   console.log(`Comparing DIR ${dir}, gridSt:${gridSt}, targetSt:${targetSt} NOT EQUAL`);
-  // }
-  return gridSt == targetSt;
-}
-
-const canFit = (arrangement, grid, x, y) => {
-  const result = fitsWith(arrangement, x - 1, y, grid, "L") &&
-    fitsWith(arrangement, x + 1, y, grid, "R") &&
-    fitsWith(arrangement, x, y - 1, grid, "U") &&
-    fitsWith(arrangement, x, y + 1, grid, "D");
-  return result;
 }
 
 const copyArrangement = (arr) => {
@@ -149,54 +114,91 @@ const copyArrangement = (arr) => {
   return newArr;
 }
 
-const placeAt = (arrangement, tile, x, y, rotationNum) => {
-  // console.log(`trying ${tile.id} at ${x},${y}, rotationNum=${rotationNum}`)
-  if (canFit(arrangement, tile.grids[rotationNum], x, y)) {
-    const newTile = {
-      id: tile.id,
-      grids: [tile.grids[rotationNum]]
-    }
+const findMatches = (matchingLeft, matchingAbove, tilesUsed) => {
+  const notAlreadyUsed = (tile) => {
+    return tilesUsed.indexOf(tile.id) < 0;
+  };
 
-    let newArrangement = copyArrangement(arrangement);
-    newArrangement[y][x] = newTile;
-    // console.log(`trying ${tile.id} at ${x},${y} FIT}`)
-    return newArrangement;
+  if (matchingLeft && matchingAbove) {
+    let matchBoth = []
+    const aboveIds = matchingAbove.map(tile => {return tile.id});
+    matchingLeft.forEach(leftTile => {
+      const leftId = leftTile.id;
+
+      if (aboveIds.indexOf(leftId) >= 0 && tilesUsed.indexOf(leftId) < 0) {
+        matchBoth.push(leftTile);
+      }
+    })
+    return matchBoth;
+  } else if (matchingLeft) {
+    return matchingLeft.filter(notAlreadyUsed);
+  } else if (matchingAbove) {
+    return matchingAbove.filter(notAlreadyUsed);
+  } else {
+    return []
   }
-
-  // console.log(`trying ${tile.id} at ${x},${y} DID NOT FIT`)
-  return null;
 }
 
-const findArrangement = (tiles, arrangement) => {
-  console.log(`findArrangement(#${tiles.length}, #${arrangement.length})`);
-  if (tiles.length == 0) {
-    return arrangement;
+const getTileAt = (arrangement, x, y) => {
+  if (!arrangement || !arrangement[y]) {
+    return undefined
+  } else {
+    return arrangement[y][x];
+  }
+}
+
+const findArrangementPart = (tileLookup, numTiles, arrangementSoFar, tilesUsed) => {
+  console.log(`Tiles Used: ${tilesUsed}`);
+  if (numTiles <= tilesUsed.length) {
+    return arrangementSoFar;
   }
 
-  const nextTile = tiles[0];
-  const remainingTiles = tiles.slice(1);
+  const y = Math.floor(tilesUsed.length / arrangementSoFar.length);
+  const x = tilesUsed.length % arrangementSoFar.length;
 
-  for (let x = 0; x < arrangement.length; x++) {
-    for (let y = 0; y < arrangement.length; y++) {
-      if (!arrangement[y][x]) {
-        for (let rotationNum = 0; rotationNum < nextTile.grids.length; rotationNum++) {
-          const newArrangement = placeAt(arrangement, nextTile, x, y, rotationNum);
-          if (newArrangement) {
-            // dumpLayout(newArrangement);
-            const finalArrangement = findArrangement(remainingTiles, newArrangement);
-            if (finalArrangement) {
-              return finalArrangement
-            }
-          }
-        }
+  const tileAbove = getTileAt(arrangementSoFar, x , y-1);
+  const tileLeft = getTileAt(arrangementSoFar, x-1, y);
+
+  const matchingLeft = tileLeft && tileLookup.lefts[tileLeft.grids[0].right];
+  const matchingAbove = tileAbove && tileLookup.tops[tileAbove.grids[0].bottom];
+
+  // console.log(`tileLeft: ${JSON.stringify(tileLeft)}`);
+  // console.log(`left lookup: ${tileLeft.grids[0].right}`);
+  // console.log(`matchingLeft: ${matchingLeft}`);
+
+  let matches = findMatches(matchingLeft, matchingAbove, tilesUsed);
+  // console.log(`Matches: ${matches}`);
+  for (let matchNum = 0; matchNum < matches.length; matchNum++) {
+    let newArrangement = copyArrangement(arrangementSoFar);
+    // console.log(`trying ${matches[matchNum]} @ ${x},${y}`);
+    newArrangement[y][x] = matches[matchNum];
+    const newTilesUsed = [...tilesUsed, matches[matchNum].id];
+    const finalArrangement = findArrangementPart(tileLookup, numTiles, newArrangement, newTilesUsed);
+    if (finalArrangement) {
+      return finalArrangement
+    }
+  }
+}
+
+const findArrangement = (tileLookup, tiles) => {
+  const size = Math.ceil(Math.sqrt(tiles.length));
+  let arrangement = initArray(size);
+
+  for (let tileNum = 0; tileNum < tiles.length; tileNum++) {
+    const tile = tiles[tileNum];
+    for (let gridNum = 0; gridNum < tile.grids.length; gridNum++) {
+      console.log(`trying ${tile.id} @ 0,0 with orientation ${gridNum}`);
+      arrangement[0][0] = {
+        id: tile.id,
+        grids: [tile.grids[gridNum]]
+      };
+
+      const finalArrangement = findArrangementPart(tileLookup, tiles.length, arrangement, [tile.id]);
+      if (finalArrangement) {
+        return finalArrangement
       }
     }
   }
-
-  // dumpLayout(arrangement);
-  // console.log(`Could not place ${nextTile.id} with ${remainingTiles.length} left`);
-  
-  return null; // did not find one
 }
 
 const getScore = (arranged) => {
@@ -224,9 +226,9 @@ const debugging = (tiles) => {
   const t3079 = tiles[8];
 
 
-  return [t1951, t2311, t3079,
-    t2729, t1427, t2473,
-    t2971
+  return [
+    t1951, t2311,
+    t2729, t1427
   ];
 
     return [t1951, t2311,  t3079,
@@ -273,16 +275,8 @@ const run = () => {
   let st = readStringArrayFromFile("./input/day20.txt", "\n\n");
   const tiles = st.map(parseTile);
   const tileLookup = processTileLookup(tiles);
-
-  console.log(tileLookup);
-  return;
-  testing(tiles);
-  return;
-
-  const size = Math.ceil(Math.sqrt(tiles.length));
-  console.log(`size: ${size}, num tiles: ${tiles.length}`);
-  
-  const arranged = findArrangement(tiles, initArray(size));
+ 
+  const arranged = findArrangement(tileLookup, tiles);
   if (!arranged) {
     throw new Error("FAILED");
   }
