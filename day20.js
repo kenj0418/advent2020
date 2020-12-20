@@ -147,7 +147,6 @@ const getTileAt = (arrangement, x, y) => {
 }
 
 const findArrangementPart = (tileLookup, numTiles, arrangementSoFar, tilesUsed) => {
-  // console.log(`Tiles Used: ${tilesUsed}`);
   if (numTiles <= tilesUsed.length) {
     return arrangementSoFar;
   }
@@ -296,15 +295,12 @@ const run = () => {
     throw new Error("FAILED");
   }
 
-  // dumpLayout(arranged);
   const score = getScore(arranged);
-
   console.log("ANSWER (Part 1):", score);
 
   const monsters = parseGrid(readStringArrayFromFile("./input/day20monster.txt", "\n"));
   const map = constructMap(arranged);
   const mapRemain = removeMonsters(map, monsters);
-  // console.log(mapRemain.join("\n"));
   const roughness = mapRemain.join("").replace(/[O.]/g,"").length;
   console.log("ANSWER (Part 2):", roughness);
 }
