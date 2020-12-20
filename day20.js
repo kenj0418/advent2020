@@ -134,6 +134,7 @@ const findArrangement = (tiles, arrangement) => {
         for (let rotationNum = 0; rotationNum < nextTile.grids.length; rotationNum++) {
           const newArrangement = placeAt(arrangement, nextTile, x, y, rotationNum);
           if (newArrangement) {
+            // dumpLayout(newArrangement);
             const finalArrangement = findArrangement(remainingTiles, newArrangement);
             if (finalArrangement) {
               return finalArrangement
@@ -143,6 +144,9 @@ const findArrangement = (tiles, arrangement) => {
       }
     }
   }
+
+  dumpLayout(arrangement);
+  console.log(`Could not place ${nextTile.id} with ${remainingTiles.length} left`);
   
   return null; // did not find one
 }
@@ -172,7 +176,14 @@ const debugging = (tiles) => {
   const t3079 = tiles[8];
 
 
-  return [t1951, t2729, t2311,  t1427];
+  return [t1951, t2311, t3079,
+    t2729, t1427, t2473,
+    t2971
+  ];
+
+    return [t1951, t2311,  t3079,
+    t2729, t1427, t2473,
+    t2971, t1489, t1171];
   // 1951    2311    3079
   // 2729    1427    2473
   // 2971    1489    1171
