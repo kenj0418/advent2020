@@ -18,6 +18,12 @@ const rotate = (grid) => {
   return newGrid;
 }
 
+const flip = (lines) => {
+  return lines.map((st) => {
+    return st.split("").reverse().join("");
+  })
+}
+
 const parseTile = (st) => {
   const lines = st.split("\n");
   const id = parseInt(lines[0].match(/Tile ([0-9]*)\:/)[1]);
@@ -25,10 +31,14 @@ const parseTile = (st) => {
   const one = rotate(zero);
   const two = rotate(one);
   const three = rotate(two);
+  const flipZero = flip(zero);
+  const flipOne = rotate(flipZero)
+  const flipTwo = rotate(flipOne);
+  const flipThree = rotate(flipTwo);
 
   return {
     id,
-    grids: [zero, one, two, three]
+    grids: [zero, one, two, three, flipZero, flipOne, flipTwo, flipThree]
   }
 }
 
@@ -120,7 +130,7 @@ const placeAt = (arrangement, tile, x, y, rotationNum) => {
 }
 
 const findArrangement = (tiles, arrangement) => {
-  console.log(`findArrangemnet(#${tiles.length}, #${arrangement.length})`);
+  console.log(`findArrangement(#${tiles.length}, #${arrangement.length})`);
   if (tiles.length == 0) {
     return arrangement;
   }
@@ -145,8 +155,8 @@ const findArrangement = (tiles, arrangement) => {
     }
   }
 
-  dumpLayout(arrangement);
-  console.log(`Could not place ${nextTile.id} with ${remainingTiles.length} left`);
+  // dumpLayout(arrangement);
+  // console.log(`Could not place ${nextTile.id} with ${remainingTiles.length} left`);
   
   return null; // did not find one
 }
@@ -203,9 +213,31 @@ const dumpLayout = (arrangement) => {
   console.log("************")
 }
 
+const testing = (tiles) => {
+  const t2311 = tiles[0];
+  const t1951 = tiles[1];
+  const t1171 = tiles[2];
+  const t1427 = tiles[3];
+  const t1489 = tiles[4];
+  const t2473 = tiles[5];
+  const t2971 = tiles[6];
+  const t2729 = tiles[7];
+  const t3079 = tiles[8];
+
+  const a = t1951.grids[6];
+  const b = t2311.grids[6];
+  console.log(a);
+  console.log(b);
+  // const a = placeAt
+}
+
 const run = () => {
   let st = readStringArrayFromFile("./input/day20.txt", "\n\n");
   const tiles = st.map(parseTile);
+
+  testing(tiles);
+  return;
+
   const size = Math.ceil(Math.sqrt(tiles.length));
   console.log(`size: ${size}, num tiles: ${tiles.length}`);
   
