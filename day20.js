@@ -24,6 +24,16 @@ const flip = (lines) => {
   })
 }
 
+const processGrids = (grid) => {
+  return {
+    layout: grid,
+    left: getLeft(grid),
+    right: getRight(grid),
+    top: getTop(grid),
+    bottom: getBottom(grid)
+  }
+}
+
 const parseTile = (st) => {
   const lines = st.split("\n");
   const id = parseInt(lines[0].match(/Tile ([0-9]*)\:/)[1]);
@@ -36,13 +46,17 @@ const parseTile = (st) => {
   const flipTwo = rotate(flipOne);
   const flipThree = rotate(flipTwo);
 
+  const rawGrids = [zero, one, two, three, flipZero, flipOne, flipTwo, flipThree]
+  const grids = rawGrids.map(processGrids);
+
   return {
     id,
-    grids: [zero, one, two, three, flipZero, flipOne, flipTwo, flipThree]
+    grids
   }
 }
 
 const getLeft = (grid) => {
+  console.log(grid);
   return grid.map(st => {return st[0];}).join("");
 }
 
@@ -56,6 +70,30 @@ const getBottom = (grid) => {
 
 const getTop = (grid) => {
   return grid[0];
+}
+
+const processTileLookup = (tiles) => {
+  let lefts = {};
+  let rights = {};
+  let tops = {};
+  let bottoms = {}
+  tiles.forEach(tile => {
+    console.log("TILE", tile);
+    tile.grids.forEach((grid) => {
+      const currTile = {
+        id: tile.id,
+        grids: [grid]
+      };
+      lefts[getLeft(grid)] = currTile;
+      rights[getRight(grid)] = currTile;
+      tops[getTop(grid)] = currTile;
+      bottoms[getBottom(grid)] = currTile;
+    })
+  })
+
+  return {
+    lefts, rights, tops, bottoms
+  }
 }
 
 const fitsWith = (arrangement, x, y, grid, dir) => {
@@ -234,7 +272,10 @@ const testing = (tiles) => {
 const run = () => {
   let st = readStringArrayFromFile("./input/day20.txt", "\n\n");
   const tiles = st.map(parseTile);
+  const tileLookup = processTileLookup(tiles);
 
+  console.log(tileLookup);
+  return;
   testing(tiles);
   return;
 
