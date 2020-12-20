@@ -3,10 +3,6 @@ const {readStringArrayFromFile} = require("./lib");
 const rotate = (grid) => {
   let newGrid = [];
 
-  if (!grid || !grid[0]) {
-    // console.log(`grid: ${JSON.stringify(grid)}`);
-  }
-
   for (let colNum = grid[0].length - 1; colNum >= 0; colNum--) {
     let newLine = "";
     for (let rowNum = 0; rowNum < grid.length; rowNum++) {
@@ -34,10 +30,7 @@ const processGrids = (grid) => {
   }
 }
 
-const parseTile = (st) => {
-  const lines = st.split("\n");
-  const id = parseInt(lines[0].match(/Tile ([0-9]*)\:/)[1]);
-  const zero = lines.slice(1);
+const parseGrid = (zero) => {
   const one = rotate(zero);
   const two = rotate(one);
   const three = rotate(two);
@@ -46,7 +39,13 @@ const parseTile = (st) => {
   const flipTwo = rotate(flipOne);
   const flipThree = rotate(flipTwo);
 
-  const rawGrids = [zero, one, two, three, flipZero, flipOne, flipTwo, flipThree]
+  return [zero, one, two, three, flipZero, flipOne, flipTwo, flipThree]
+}
+
+const parseTile = (st) => {
+  const lines = st.split("\n");
+  const id = parseInt(lines[0].match(/Tile ([0-9]*)\:/)[1]);
+  const rawGrids = parseGrid(lines.slice(1));
   const grids = rawGrids.map(processGrids);
 
   return {
@@ -148,7 +147,7 @@ const getTileAt = (arrangement, x, y) => {
 }
 
 const findArrangementPart = (tileLookup, numTiles, arrangementSoFar, tilesUsed) => {
-  console.log(`Tiles Used: ${tilesUsed}`);
+  // console.log(`Tiles Used: ${tilesUsed}`);
   if (numTiles <= tilesUsed.length) {
     return arrangementSoFar;
   }
@@ -162,15 +161,9 @@ const findArrangementPart = (tileLookup, numTiles, arrangementSoFar, tilesUsed) 
   const matchingLeft = tileLeft && tileLookup.lefts[tileLeft.grids[0].right];
   const matchingAbove = tileAbove && tileLookup.tops[tileAbove.grids[0].bottom];
 
-  // console.log(`tileLeft: ${JSON.stringify(tileLeft)}`);
-  // console.log(`left lookup: ${tileLeft.grids[0].right}`);
-  // console.log(`matchingLeft: ${matchingLeft}`);
-
   let matches = findMatches(matchingLeft, matchingAbove, tilesUsed);
-  // console.log(`Matches: ${matches}`);
   for (let matchNum = 0; matchNum < matches.length; matchNum++) {
     let newArrangement = copyArrangement(arrangementSoFar);
-    // console.log(`trying ${matches[matchNum]} @ ${x},${y}`);
     newArrangement[y][x] = matches[matchNum];
     const newTilesUsed = [...tilesUsed, matches[matchNum].id];
     const finalArrangement = findArrangementPart(tileLookup, numTiles, newArrangement, newTilesUsed);
@@ -187,7 +180,6 @@ const findArrangement = (tileLookup, tiles) => {
   for (let tileNum = 0; tileNum < tiles.length; tileNum++) {
     const tile = tiles[tileNum];
     for (let gridNum = 0; gridNum < tile.grids.length; gridNum++) {
-      console.log(`trying ${tile.id} @ 0,0 with orientation ${gridNum}`);
       arrangement[0][0] = {
         id: tile.id,
         grids: [tile.grids[gridNum]]
@@ -214,33 +206,6 @@ const initArray = (size) => {
   return arr;
 }
 
-const debugging = (tiles) => {
-  const t2311 = tiles[0];
-  const t1951 = tiles[1];
-  const t1171 = tiles[2];
-  const t1427 = tiles[3];
-  const t1489 = tiles[4];
-  const t2473 = tiles[5];
-  const t2971 = tiles[6];
-  const t2729 = tiles[7];
-  const t3079 = tiles[8];
-
-
-  return [
-    t1951, t2311,
-    t2729, t1427
-  ];
-
-    return [t1951, t2311,  t3079,
-    t2729, t1427, t2473,
-    t2971, t1489, t1171];
-  // 1951    2311    3079
-  // 2729    1427    2473
-  // 2971    1489    1171
-
-
-}
-
 const dumpLayout = (arrangement) => {
   console.log("************")
   arrangement.forEach(line => {
@@ -253,22 +218,72 @@ const dumpLayout = (arrangement) => {
   console.log("************")
 }
 
-const testing = (tiles) => {
-  const t2311 = tiles[0];
-  const t1951 = tiles[1];
-  const t1171 = tiles[2];
-  const t1427 = tiles[3];
-  const t1489 = tiles[4];
-  const t2473 = tiles[5];
-  const t2971 = tiles[6];
-  const t2729 = tiles[7];
-  const t3079 = tiles[8];
+const constructMap = (arranged) =>  {
+  let arr = [];
+  for (let arrRowNum = 0; arrRowNum < arranged.length; arrRowNum++) {
+    const arrRow = arranged[arrRowNum];
+    const textWidth = arrRow[0].grids[0].layout.length
+    for (let gridRowNum = 1; gridRowNum < textWidth -1; gridRowNum++) {
+      let line = "";
+      for (let arrColNum = 0; arrColNum < arrRow.length; arrColNum++) {
+        const gridLine = arrRow[arrColNum].grids[0].layout[gridRowNum];
+        line += gridLine.slice(1, gridLine.length - 1);
+      }
+      arr.push(line);
+    }
+  }
+  return arr;
+}
 
-  const a = t1951.grids[6];
-  const b = t2311.grids[6];
-  console.log(a);
-  console.log(b);
-  // const a = placeAt
+const isMonsterAt = (map, monster, x, y) => {
+  for (let monsterY = 0; monsterY < monster.length; monsterY++) {
+    for (let monsterX = 0; monsterX < monster[monsterY].length; monsterX++) {
+      if (monster[monsterY][monsterX] == "#" && map[y + monsterY][x + monsterX] != "#") {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+const removeMonsterAt = (map, monster, x, y) => {
+  console.log(`Removing monster at ${x}, ${y}`);
+  let currMap = JSON.parse(JSON.stringify(map));
+
+  for (let monsterY = 0; monsterY < monster.length; monsterY++) {
+    for (let monsterX = 0; monsterX < monster[monsterY].length; monsterX++) {
+      if (monster[monsterY].charAt(monsterX) == "#") {
+        let currRow = currMap[y + monsterY];
+        currRow = currRow.slice(0, x + monsterX) + "O" + currRow.slice(x + monsterX + 1);
+        currMap[y + monsterY] = currRow;
+      }
+    }
+  }
+
+  return currMap;
+}
+
+const removeMonster = (map, monster) => {
+  let currMap = JSON.parse(JSON.stringify(map));
+  for (let y = 0; y <= map.length - monster.length; y++) {
+    for (let x = 0; x <= map[y].length - monster[0].length; x++) {
+      if (isMonsterAt(map, monster, x, y)) {
+        currMap = removeMonsterAt(currMap, monster, x, y);
+      }
+    }
+  }
+
+  return currMap;
+}
+
+const removeMonsters = (map, monsters) => {
+  let currMap = JSON.parse(JSON.stringify(map));
+  for (let monsterNum = 0; monsterNum < monsters.length; monsterNum++) {
+    currMap = removeMonster(currMap, monsters[monsterNum]);
+  }
+
+  return currMap;
 }
 
 const run = () => {
@@ -281,10 +296,17 @@ const run = () => {
     throw new Error("FAILED");
   }
 
-  dumpLayout(arranged);
+  // dumpLayout(arranged);
   const score = getScore(arranged);
 
   console.log("ANSWER (Part 1):", score);
+
+  const monsters = parseGrid(readStringArrayFromFile("./input/day20monster.txt", "\n"));
+  const map = constructMap(arranged);
+  const mapRemain = removeMonsters(map, monsters);
+  // console.log(mapRemain.join("\n"));
+  const roughness = mapRemain.join("").replace(/[O.]/g,"").length;
+  console.log("ANSWER (Part 2):", roughness);
 }
 
 module.exports = { run };
