@@ -16,150 +16,61 @@ const parseFoods = (st) => {
   }
 }
 
-const findFoodsWithNoAllergens = (foods) => {
-  return foods.filter(food => {
-    return food.allergens.length == 0
-  }).map(food => {
-    return food.ingr
-  }).flat();
-}
-
-const findFoodsWithOneAllergen = (foods) => {
-  return foods.filter(food => {
-    console.log("findFoodsWithOneAllergen food", JSON.stringify(food));
-    return food.allergens.length == 1
-  }).map(food => {
-    return {
-      allergen: food.allergens[0],
-      ingr: food.ingr
-    }
-  });
-}
-
-const findOneIngredientAllergens = (foods) => {
-  return foods.filter(food => {
-    return food.allergens.length == 1 && food.ingr.length == 1
-  }).map(food => {
-    return {
-      allergen: food.allergens[0],
-      ingr: food.ingr[0]
-    }
-  })
-}
-
-const containsAllergen = (food, allergen) => {
-  if (!food || !allergen) return false;
-
-  return food.allergens.indexOf(allergen) >= 0;
-}
-
-const removeIngr = (foods, ingr, exceptAllergen) => {
-  console.log(`removing: ${ingr} from all allergens except ${exceptAllergen}`);
-  const result = foods.map(food => {
-    const filteredIngr = food.ingr.filter(i => {
-      return i != ingr || containsAllergen(food, exceptAllergen) 
-    });
-
-    return {
-      allergens: food.allergens,
-      ingr: filteredIngr
-    }
-  })
-  // console.log(`removeIngr: ${JSON.stringify(result[1])}`)
-  return result;
-}
-
-const removeAllergen = (foods, ingr) => {
-  return foods.map(food => {
-    const filteredAllergen = food.ingr.filter(i => {return i != ingr});
-    return {
-      allergens: filteredAllergen,
-      ingr: food.ingr
-    }
-  })
-}
-
-const simplify = (origFoods, origNoAllergens, origWithAllergens) => {
-  let foods = JSON.parse(JSON.stringify(origFoods));
-  let noAllergens = JSON.parse(JSON.stringify(origNoAllergens));
-  let withAllergens = JSON.parse(JSON.stringify(origWithAllergens));
-
-  // remove any with no allergens
-  const foodsWithNoAlergens = findFoodsWithNoAllergens(foods);
-  for (index in foodsWithNoAlergens) {
-    const ingr = foodsWithNoAlergens[index]
-    console.log(`Has no allergen: ${ingr}`)
-    noAllergens.push(ingr);
-    foods = removeIngr(foods, ingr);
-    console.log("FOODS1:", JSON.stringify(foods));
+const updatePossibilities = (allergenPossibilities, allergen, ingrs) => {
+  // console.log(`updatePossibilities(..., ${allergen}, ${JSON.stringify(ingrs)})`);
+  const currPossibilities = allergenPossibilities[allergen];
+  if (!currPossibilities) {
+    // console.log(`${allergen} new`, JSON.stringify(ingrs));
+    allergenPossibilities[allergen] = JSON.parse(JSON.stringify(ingrs));
+    return;
   }
 
-  // remove any with exactly one ingredients
-  const knownAllergensAndIngr = findOneIngredientAllergens(foods);
-  for (index in knownAllergensAndIngr) {
-    const known = knownAllergensAndIngr[index]
-    console.log(`${known.ingr} has ${known.allergen}`)
-    withAllergens.push(known.ingr);
-    foods = removeIngr(foods, known.ingr);
-    foods = removeAllergen(foods, known.allergen)
-  }
-
-  // filter down any ingr with only one allergen
-  const knownAllergen = findFoodsWithOneAllergen(foods);
-  for (index in knownAllergen) {
-    const known = knownAllergen[index]
-    console.log("---");
-    console.log(known)
-    console.log(`${known.allergen} must be one of ${JSON.stringify(known.ingr)}`);
-    console.log("FOODS3bef:", JSON.stringify(foods));
-    for (i in known.ingr) {
-      foods = removeIngr(foods, known.ingr[i], known.allergen);
-    }
-    console.log("FOODS3aft:", JSON.stringify(foods));
-    console.log("---");
-  }
-
-  foods = foods.filter((food) => {
-    return food.allergens.length != 0 || food.ingr.length != 0
+  // console.log("currPossibilities: ", JSON.stringify(currPossibilities));
+  const stillValidPossibilities = currPossibilities.filter( ingr => {
+    // console.log(`is ${ingr} in ${JSON.stringify(ingrs)} : ${ingrs.indexOf(ingr) >= 0}`);
+    return ingrs.indexOf(ingr) >= 0
   })
 
-  return {foods, noAllergens, withAllergens}
+  // console.log(`${allergen} update`, JSON.stringify(stillValidPossibilities));
+  allergenPossibilities[allergen] = stillValidPossibilities;
 }
 
-const determineAllergens = (origFoods) => {
-  let foods = JSON.parse(JSON.stringify(origFoods));
-  let noAllergens = []
-  let withAllergens = []
+const getAllergenPossibilites = (foods) => {
+  let allergenPossibilities = {};
 
-  let before = "x";
-  let after = "y";
-  let cycles = 0
-  while (before != after) {
-    before = `${JSON.stringify(foods)}/${JSON.stringify(noAllergens)}/${JSON.stringify(withAllergens)}`;
-    const result = simplify(foods, noAllergens, withAllergens);
-    foods = result.foods;
-    noAllergens = result.noAllergens;
-    withAllergens = result.withAllergens
-    after = `${JSON.stringify(foods)}/${JSON.stringify(noAllergens)}/${JSON.stringify(withAllergens)}`;
-    cycles++;
-  }
-  console.log(`Cycles: ${cycles}`);
+  for (let foodNum in foods) {
+    const food = foods[foodNum];
 
-  return {
-    noAllergens,
-    withAllergens,
-    unknown: foods
+    for (let allergenNum in food.allergens) {
+      const allergen = food.allergens[allergenNum];
+      updatePossibilities(allergenPossibilities, allergen, food.ingr);
+    }
   }
+
+  return allergenPossibilities;
+}
+
+const getAllIngr = (foods) => {
+  return foods.map(food => {return food.ingr}).flat();
+}
+
+const getAllTaintedIngr = (allergenPossibilities) => {
+  return Object.getOwnPropertyNames(allergenPossibilities).map(pos => {return allergenPossibilities[pos]}).flat();
 }
 
 const run = () => {
   let st = readStringArrayFromFile("./input/day21.txt", "\n");
   const foodList = st.map(parseFoods);
-  const foods = determineAllergens(foodList);
+  const allergenPossibilities = getAllergenPossibilites(foodList);
+  const allTaintedIngr = getAllTaintedIngr(allergenPossibilities);
+  const allIngr = getAllIngr(foodList);
+  const cleanIngr = allIngr.filter(ingr => {
+    return allTaintedIngr.indexOf(ingr) < 0;
+  })
 
-  console.log(JSON.stringify(foods, null, 2));
+  console.log(JSON.stringify(allergenPossibilities, null, 2));
 
-  console.log("ANSWER (Part 1):", foods.noAllergens.length);
+  console.log("ANSWER (Part 1):", cleanIngr.length);
 
 }
 
