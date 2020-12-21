@@ -72,6 +72,8 @@ const run = () => {
 
   console.log("ANSWER (Part 1):", cleanIngr.length);
 
+  // manually checked out the output from the allergenPossibility dump above for part 2
+
 }
 
 module.exports = { run };
