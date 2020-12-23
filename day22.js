@@ -1,11 +1,7 @@
 const {readStringArrayFromFile} = require("./lib");
 
-const play = (hands) => {
+const play1 = (hands) => {
   const h = [hands[0].shift(), hands[1].shift()];
-  
-  if (h[0] == h[1]) {
-    console.log("TIE??")
-  }
   
   const winner = (h[0] > h[1]) ? 0 : 1;
   hands[winner].push(h[winner]);
@@ -23,35 +19,71 @@ const getScore = (hand) => {
   return score;
 }
 
+const playGamePart1 = (hands) => {
+  while (hands[0].length && hands[1].length) {
+    play1(hands);
+  }
+}
+
+const play2 = (hands, history) => {
+  // console.log(` - ${hands[0].length} vs ${hands[1].length}`)
+
+  const historyKey = getHistoryKey(hands);
+  if (history.indexOf(historyKey) >= 0) {
+    return 1;
+  }
+  history.push(historyKey);
+  // console.log(`  Hand: ${historyKey.length}`)
+
+  
+  let winner;
+  const h = [hands[0].shift(), hands[1].shift()];
+  if (h[0] > hands[0].length || h[1] > hands[1].length) {
+    winner = (h[0] > h[1]) ? 0 : 1;
+  } else {
+    const recurseHands = [
+      hands[0].slice(0, h[0]),
+      hands[1].slice(0, h[1])
+    ];
+    
+    winner = playGamePart2(recurseHands);
+  }
+  
+  hands[winner].push(h[winner]);
+  hands[winner].push(h[1 - winner]);
+}
+
+const getHistoryKey = (hands) => {
+  return JSON.stringify(hands);
+}
+
+const playGamePart2 = (hands) => {
+  // console.log(`Playing ${hands[0].length} vs ${hands[1].length}`)
+  let history = [];
+  let gameOverDup = 0
+  while (!gameOverDup && hands[0].length && hands[1].length) {
+    gameOverDup = play2(hands, history);
+  }
+  
+  if (gameOverDup) {
+    return 0; // player 1
+  } else {
+    return hands[0].length ? 0 : 1;
+  }
+}
+
 const run = () => {
-  let st = readStringArrayFromFile("./input/day22.txt", "\n\n");
+  let st = readStringArrayFromFile("./input/day22test.txt", "\n\n");
   
   
   let hands = st.map(hand => {return hand.split("\n").slice(1).map(Number)});
-  
-  let roundNum = 0
-  while (hands[0].length && hands[1].length) {
-//    console.log(`R${roundNum} H1: ${hands[0]}`);
-//    console.log(`R${roundNum} H2: ${hands[1]}`);
-//    if (roundNum % 1048576 == 0 || roundNum % 1048576 == 1) {
-//      console.log(`ROUND ${roundNum}:  H1: ${hands[0].length}  H2: ${hands[1].length}`)
-//    }
-    roundNum++
-    play(hands);
-    if (roundNum > 1048576*4) {
-      console.log(hands)
-      return
-    }
-  }
-  
+//  playGamePart1(hands);
+//  const winningHand = hands[0].length ? 0 : 1;
 
+  const winningHand = playGamePart2(hands);
   
-  console.log(hands);
-  const winningHand = hands[0].length ? hands[0] : hands[1];
-  const score = getScore(winningHand);
-
-  console.log("ANSWER (Part 1):", score);
-
+  const score = getScore(hands[winningHand]);
+  console.log("ANSWER:", score);
 
 }
 
