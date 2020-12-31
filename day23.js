@@ -1,85 +1,108 @@
-const {readStringArrayFromFile} = require("./lib");
-
-const takeThree = (cups) => {
-  const temp = cups.shift();
-  const crab = [cups.shift(), cups.shift(), cups.shift()];
-  cups.unshift(temp);
-  return crab;
-}
-
-const rotateTo = (cups, value) => {
-  console.log(`rotating to ${value}`)
-  if (!value) throw new Error("TEST");
-  while (cups[0] != value) {
-    console.log(`Looking for ${value}: ${cups}`)
-    const temp = cups.shift();
-    cups.push(temp);
+class CupGame {
+  constructor(initial) {
+    this.cups = initial;
+    this.currentIndex = 0;
   }
-}
 
-const putBackIn = (cups, crab) => {
-  const temp = cups.shift();
-  cups.unshift(crab[2]);
-  cups.unshift(crab[1]);
-  cups.unshift(crab[0]);
-  cups.unshift(temp);
-}
-
-const nextCup = (cups, target) => {
-  let i = 0;
-  while (cups[i] != target) {
-    console.log(i);
-    i = (i + 1) % cups.length;
+  takeThree() {
+    return [this.takeOne(), this.takeOne(), this.takeOne()];
   }
-  i = (i + 1) % cups.length; // one more
-  
- // console.log (`nextCup returning cups[${i}]: ${cups[i]}`)
-  return cups[i];
-}
 
-const move = (cups, currCup) => {
-  
-  const minV = Math.min(...cups);
-  const maxV = Math.max(...cups);
-
-  rotateTo(cups, currCup);
-  const crab = takeThree(cups);
-  // console.log(`Pick up: ${crab}`)
-  // console.log(`left: ${cups}`)
-
-  let target = cups[0] - 1;
-  while (crab.indexOf(target) >= 0) {
-    // console.log("target: ", target)
-    target--;
-    if (target < minV) {
-      target = maxV;
+  takeOne() {
+    if (this.currentIndex + 1 == this.cups.length) {
+      const cup = this.cups[0];
+      this.cups = this.cups.slice(1);
+      this.currentIndex--;
+      return cup;
+    } else {
+      const cup = this.cups[this.currentIndex + 1];
+      this.cups = [...this.cups.slice(0, this.currentIndex + 1), ...this.cups.slice(this.currentIndex + 2)];
+      return cup;
     }
   }
-  rotateTo(cups, target);
 
-  putBackIn(cups, crab);
+  static fromString(initialSt) {
+    return new CupGame(initialSt.split("").map(Number));
+  }
 
-  return nextCup(cups, currCup)
+  getDestination() {
+    let targetValue = this.cups[this.currentIndex] - 1;
+
+    while(true) {
+      const index = this.cups.indexOf(targetValue);
+      if (index >= 0) {
+        return index;
+      }
+
+      targetValue--;
+
+      if (targetValue <= 0) {
+        targetValue = 9;
+      }
+    }
+  }
+
+  place(cups, destination) {
+    if (destination < this.currentIndex) {
+      this.currentIndex += cups.length;
+    }
+    this.cups = [...this.cups.slice(0, destination + 1), ...cups, ...this.cups.slice(destination + 1)];
+  }
+
+  next() {
+    this.currentIndex = (this.currentIndex + 1) % this.cups.length;
+  }
+
+  displayCups() {
+    const cupStrings = this.cups.map((cup, index) => {
+      if (index == this.currentIndex) {
+        return `(${cup})`;
+      } else {
+        return `${cup}`;
+      }
+    })
+
+    console.log(`cups:  ${cupStrings.join(" ")}`);
+  }
+
+  move() {
+    this.displayCups();
+    const threeCups = this.takeThree();
+    console.log(`pick up: ${threeCups}`);
+    const destination = this.getDestination();
+    this.place(threeCups, destination);
+    this.next();
+    console.log(`destination: ${this.cups[this.currentIndex]}`);
+    console.log("------");
+  }
+
+  getLabelsFromOne() {
+    const onePos = this.cups.indexOf(1);
+    if (onePos < 0) {
+      throw new Error("NO ONE");
+    }
+
+    const cupsInOrder = [...this.cups.slice(onePos + 1), ...this.cups.slice(0, onePos)];
+    return cupsInOrder.map(cup => {return `${cup}`}).join("");
+  }
+
+/*
+The crab selects a new current cup: the cup which is immediately clockwise of the current cup.
+*/
 }
 
 const run = () => {
-  //let st = "589174263";
-  //let count = 100;
-  let st = "389125467"
-  let count = 10;
+  let st = "589174263";
+  // let st = "389125467"
+  let count = 100;
   
-  let cups = st.split("").map(Number);
+  let cups = CupGame.fromString(st);
   
-  let target = cups[0]
   for (let i = 0; i < count; i++) {
-    target = move(cups, target);
-    if (!target) throw new Error('target is zero')
-    console.log(cups.map(c => {
-      return (c == target) ? `(${c})` : `${c}`;
-    }).join(" "))
+    cups.move();
   }
-  
-  console.log("ANSWER (Part 1):", cups.map(String).join(""));
+
+  console.log("ANSWER (Part 1):", cups.getLabelsFromOne());
 
 
 }
