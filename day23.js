@@ -97,6 +97,7 @@ class CupGame {
 
   move() {
     const threeCups = this.takeThree();
+    console.log(threeCups);
     const destination = this.getDestination(threeCups);
     if (!destination) {
       throw new Error("Did not find desintation")
