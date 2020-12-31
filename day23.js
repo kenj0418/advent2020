@@ -1,7 +1,28 @@
+class Cup {
+  constructor(value) {
+    this.value = value;
+    this.next = null;
+  }
+}
+
 class CupGame {
   constructor(initial) {
-    this.cups = initial;
-    this.currentIndex = 0;
+    let firstCup = null;
+    let prevCup = null;
+
+    for (let i = 0; i < initial.length; i++) {
+      const currCup = new Cup(initial[i]);
+      if (prevCup) {
+        prevCup.next = currCup;
+      } else {
+        firstCup = currCup;
+      }
+      prevCup = currCup;
+    }
+
+    prevCup.next = firstCup;
+    this.currentCup = firstCup;
+    this.maxValue = initial.length;
   }
 
   takeThree() {
@@ -9,91 +30,89 @@ class CupGame {
   }
 
   takeOne() {
-    if (this.currentIndex + 1 == this.cups.length) {
-      const cup = this.cups[0];
-      this.cups = this.cups.slice(1);
-      this.currentIndex--;
-      return cup;
-    } else {
-      const cup = this.cups[this.currentIndex + 1];
-      this.cups = [...this.cups.slice(0, this.currentIndex + 1), ...this.cups.slice(this.currentIndex + 2)];
-      return cup;
-    }
+    const cup = this.currentCup.next;
+    this.currentCup.next = this.currentCup.next.next;
+    return cup;
   }
 
   static fromString(initialSt) {
     return new CupGame(initialSt.split("").map(Number));
   }
 
-  getDestination() {
-    let targetValue = this.cups[this.currentIndex] - 1;
+  getDestination(removedCups) {
+    const removedValues = removedCups.map(cup => {return cup.value});
+    let targetValue = this.currentCup.value - 1;
 
     while(true) {
-      const index = this.cups.indexOf(targetValue);
-      if (index >= 0) {
-        return index;
+      if (targetValue <= 0) {
+        targetValue = this.maxValue;
+      }
+
+      if (removedValues.indexOf(targetValue) < 0) {
+        return this.findCup(targetValue);
       }
 
       targetValue--;
-
-      if (targetValue <= 0) {
-        targetValue = 9;
-      }
     }
+  }
+
+  findCup(targetValue) {
+    if (this.currentCup.value == targetValue) {
+      return this.currentCup;
+    }
+
+    let cup = this.currentCup.next;
+    const stopValue = this.currentCup.value;
+    while (cup.value != targetValue && cup.value != stopValue) {
+      cup = cup.next;
+    }
+
+    if (cup.value == targetValue) {
+      return cup;
+    } else {
+      throw new Error(`Unable to find : ${targetValue}`);
+    }
+  }
+
+  placeCup(cup, destination) {
+    cup.next = destination.next;
+    destination.next = cup;
   }
 
   place(cups, destination) {
-    if (destination < this.currentIndex) {
-      this.currentIndex += cups.length;
-    }
-    this.cups = [...this.cups.slice(0, destination + 1), ...cups, ...this.cups.slice(destination + 1)];
+    this.placeCup(cups[2], destination);
+    this.placeCup(cups[1], destination);
+    this.placeCup(cups[0], destination);
   }
 
   next() {
-    this.currentIndex = (this.currentIndex + 1) % this.cups.length;
-  }
-
-  displayCups() {
-    const cupStrings = this.cups.map((cup, index) => {
-      if (index == this.currentIndex) {
-        return `(${cup})`;
-      } else {
-        return `${cup}`;
-      }
-    })
-
-    console.log(`cups:  ${cupStrings.join(" ")}`);
+    this.currentCup = this.currentCup.next;
   }
 
   move() {
-    this.displayCups();
     const threeCups = this.takeThree();
-    console.log(`pick up: ${threeCups}`);
-    const destination = this.getDestination();
+    const destination = this.getDestination(threeCups);
+    if (!destination) {
+      throw new Error("Did not find desintation")
+    }
     this.place(threeCups, destination);
     this.next();
-    console.log(`destination: ${this.cups[this.currentIndex]}`);
-    console.log("------");
   }
 
   getLabelsFromOne() {
-    const onePos = this.cups.indexOf(1);
-    if (onePos < 0) {
-      throw new Error("NO ONE");
+    let currCup = this.findCup(1).next;
+    let st = ""
+    while (currCup.value != 1) {
+      st += `${currCup.value}`;
+      currCup = currCup.next;
     }
-
-    const cupsInOrder = [...this.cups.slice(onePos + 1), ...this.cups.slice(0, onePos)];
-    return cupsInOrder.map(cup => {return `${cup}`}).join("");
+    return st;
   }
-
-/*
-The crab selects a new current cup: the cup which is immediately clockwise of the current cup.
-*/
 }
 
 const run = () => {
-  let st = "589174263";
-  // let st = "389125467"
+  // let st = "589174263";
+  let st = "389125467"
   let count = 100;
   
   let cups = CupGame.fromString(st);
@@ -103,7 +122,6 @@ const run = () => {
   }
 
   console.log("ANSWER (Part 1):", cups.getLabelsFromOne());
-
 
 }
 
