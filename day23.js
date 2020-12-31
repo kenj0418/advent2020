@@ -7,11 +7,13 @@ class Cup {
 
 class CupGame {
   constructor(initial, maxValue) {
+    this.allCups = new Array(maxValue + 1);
     let firstCup = null;
     let prevCup = null;
 
     for (let i = 0; i < initial.length; i++) {
       const currCup = new Cup(initial[i]);
+      this.allCups[initial[i]] = currCup;
       if (prevCup) {
         prevCup.next = currCup;
       } else {
@@ -22,6 +24,7 @@ class CupGame {
 
     for (let i = initial.length + 1; i <= maxValue; i++) {
       const currCup = new Cup(i);
+      this.allCups[i] = currCup;
       prevCup.next = currCup;
       prevCup = currCup;
     }
@@ -63,21 +66,7 @@ class CupGame {
   }
 
   findCup(targetValue) {
-    if (this.currentCup.value == targetValue) {
-      return this.currentCup;
-    }
-
-    let cup = this.currentCup.next;
-    const stopValue = this.currentCup.value;
-    while (cup.value != targetValue && cup.value != stopValue) {
-      cup = cup.next;
-    }
-
-    if (cup.value == targetValue) {
-      return cup;
-    } else {
-      throw new Error(`Unable to find : ${targetValue}`);
-    }
+    return this.allCups[targetValue];
   }
 
   placeCup(cup, destination) {
@@ -122,8 +111,8 @@ class CupGame {
 }
 
 const run = () => {
-  // let st = "589174263";
-  let st = "389125467"
+  let st = "589174263";
+  // let st = "389125467"
   // let count = 100;
   // let cups = CupGame.fromString(st, 9);
   // for (let i = 0; i < count; i++) {
@@ -131,7 +120,7 @@ const run = () => {
   // }
   // console.log("ANSWER (Part 1):", cups.getLabelsFromOne());
 
-  let count = 10000;//000;
+  let count = 10000000;
   let cups = CupGame.fromString(st, 1000000);
   for (let i = 0; i < count; i++) {
     if (i % 524288 == 0) {
