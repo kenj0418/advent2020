@@ -6,7 +6,7 @@ class Cup {
 }
 
 class CupGame {
-  constructor(initial) {
+  constructor(initial, maxValue) {
     let firstCup = null;
     let prevCup = null;
 
@@ -20,9 +20,15 @@ class CupGame {
       prevCup = currCup;
     }
 
+    for (let i = initial.length; i <= maxValue; i++) {
+      const currCup = new Cup(initial[i]);
+      prevCup.next = currCup;
+      prevCup = currCup;
+    }
+
     prevCup.next = firstCup;
     this.currentCup = firstCup;
-    this.maxValue = initial.length;
+    this.maxValue = maxValue;
   }
 
   takeThree() {
@@ -35,8 +41,8 @@ class CupGame {
     return cup;
   }
 
-  static fromString(initialSt) {
-    return new CupGame(initialSt.split("").map(Number));
+  static fromString(initialSt, totalCount) {
+    return new CupGame(initialSt.split("").map(Number), totalCount);
   }
 
   getDestination(removedCups) {
@@ -115,7 +121,7 @@ const run = () => {
   let st = "389125467"
   let count = 100;
   
-  let cups = CupGame.fromString(st);
+  let cups = CupGame.fromString(st, 9);
   
   for (let i = 0; i < count; i++) {
     cups.move();
