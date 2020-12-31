@@ -21,7 +21,7 @@ class CupGame {
     }
 
     for (let i = initial.length + 1; i <= maxValue; i++) {
-      const currCup = new Cup(initial[i]);
+      const currCup = new Cup(i);
       prevCup.next = currCup;
       prevCup = currCup;
     }
@@ -97,7 +97,6 @@ class CupGame {
 
   move() {
     const threeCups = this.takeThree();
-    console.log(threeCups);
     const destination = this.getDestination(threeCups);
     if (!destination) {
       throw new Error("Did not find desintation")
@@ -132,10 +131,12 @@ const run = () => {
   // }
   // console.log("ANSWER (Part 1):", cups.getLabelsFromOne());
 
-  // let count = 10000000;
-  let count = 10;
+  let count = 10000;//000;
   let cups = CupGame.fromString(st, 1000000);
   for (let i = 0; i < count; i++) {
+    if (i % 524288 == 0) {
+      console.log(`turn ${i}`);
+    }
     cups.move();
   }
   console.log("ANSWER (Part 2):", cups.getAnswerProduct());
