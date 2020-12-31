@@ -20,7 +20,7 @@ class CupGame {
       prevCup = currCup;
     }
 
-    for (let i = initial.length; i <= maxValue; i++) {
+    for (let i = initial.length + 1; i <= maxValue; i++) {
       const currCup = new Cup(initial[i]);
       prevCup.next = currCup;
       prevCup = currCup;
@@ -114,20 +114,30 @@ class CupGame {
     }
     return st;
   }
+
+  getAnswerProduct() {
+    let currCup = this.findCup(1).next;
+    return currCup.value * currCup.next.value;
+  }
 }
 
 const run = () => {
   // let st = "589174263";
   let st = "389125467"
-  let count = 100;
-  
-  let cups = CupGame.fromString(st, 9);
-  
+  // let count = 100;
+  // let cups = CupGame.fromString(st, 9);
+  // for (let i = 0; i < count; i++) {
+  //   cups.move();
+  // }
+  // console.log("ANSWER (Part 1):", cups.getLabelsFromOne());
+
+  // let count = 10000000;
+  let count = 10;
+  let cups = CupGame.fromString(st, 1000000);
   for (let i = 0; i < count; i++) {
     cups.move();
   }
-
-  console.log("ANSWER (Part 1):", cups.getLabelsFromOne());
+  console.log("ANSWER (Part 2):", cups.getAnswerProduct());
 
 }
 
