@@ -79,14 +79,74 @@ const countBlack = (tiles) => {
   return Object.getOwnPropertyNames(tiles).length;
 }
 
+const getAdjacentValue = (tiles, pos, dir) => {
+  const adjPos = move(pos, dir);
+  return (tiles[getKey(adjPos)]) ? 1 : 0
+}
+
+const countAdjacentBlack = (tiles, pos) => {
+  return getAdjacentValue(tiles, pos, "w") +
+    getAdjacentValue(tiles, pos, "e") +
+    getAdjacentValue(tiles, pos, "nw") +
+    getAdjacentValue(tiles, pos, "ne") +
+    getAdjacentValue(tiles, pos, "sw") +
+    getAdjacentValue(tiles, pos, "se");
+}
+
+const getKeys = (tiles) => {
+  return Object.getOwnPropertyNames(tiles);
+}
+
+const getXValues = (tiles) => {
+  return getKeys(tiles).map(tile => {return tile.split(":")[0]});
+}
+
+const getYValues = (tiles) => {
+  return getKeys(tiles).map(tile => {return tile.split(":")[1]});
+}
+
+const tileLife = (tiles) => {
+  const newTiles = {}
+  const xValues = getXValues(tiles);
+  const yValues = getYValues(tiles);
+  let minX = Math.min(...xValues);
+  let minY = Math.min(...yValues);
+  let maxX = Math.max(...xValues);
+  let maxY = Math.max(...yValues);
+
+  for (let x = minX - 1; x <= maxX + 1; x++) {
+    for (let y = minY - 1; y <= maxY + 1; y++) {
+      const posKey = getKey({x,y});
+      const adjCount = countAdjacentBlack(tiles, {x,y});
+      // console.log(`adjCount @ ${posKey} : ${adjCount}`);
+      if (tiles[posKey]) {
+        if (adjCount == 1 || adjCount == 2) {
+          newTiles[posKey] = true;
+        }
+      } else {
+        if (adjCount == 2) {
+          newTiles[posKey] = true;
+        }
+      }
+    }
+  }
+
+  return newTiles;
+}
+
 const run = () => {
   let st = readStringArrayFromFile("./input/day24.txt", "\n");
   let allInstructions = st.map(parseInstructionLine);
   let tiles = {}
   processAllInstructions(tiles, allInstructions)
-  const numBlack = countBlack(tiles);
+  console.log("ANSWER (part 1) :", countBlack(tiles));
+
   // console.log(tiles);
-  console.log("ANSWER (part1) :", numBlack);
+  for (let i = 1; i <= 100; i++) {
+    tiles = tileLife(tiles);
+    // console.log(tiles);
+  }
+  console.log("ANSWER (part 2) :", countBlack(tiles));
 }
 
 module.exports = { run };
